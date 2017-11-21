@@ -1,0 +1,3 @@
+/*
+This is a file to provide serial equivalents to the communications patterns required in the main code
+*/

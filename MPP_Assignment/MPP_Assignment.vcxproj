@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -149,11 +149,15 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="arralloc.c" />
+    <ClCompile Include="FAKE_Comms.c" />
     <ClCompile Include="imagenew.c" />
     <ClCompile Include="MPI_Comms.c" />
     <ClCompile Include="pgmio.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="arralloc.h" />
+    <ClInclude Include="FAKE_Comms.h" />
     <ClInclude Include="MPI_Comms.h" />
     <ClInclude Include="pgmio.h" />
   </ItemGroup>

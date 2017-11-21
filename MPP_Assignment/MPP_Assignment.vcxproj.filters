@@ -27,12 +27,24 @@
     <ClCompile Include="MPI_Comms.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FAKE_Comms.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="arralloc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pgmio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MPI_Comms.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FAKE_Comms.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="arralloc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
