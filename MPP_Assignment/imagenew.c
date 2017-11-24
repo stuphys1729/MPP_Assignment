@@ -1,7 +1,18 @@
 /*
- * A simple serial solution to the Case Study exercise from the MPP
- * course.  Note that this uses the alternative boundary conditions
- * that are appropriate for the assessed coursework.
+ * A file to reconstruct the original image from an edge file.
+ *
+ * Throughout the program, the following coordinate convention is assumed:
+ 
+	  j	^
+		|
+		|
+		|
+		|
+		|
+		|
+		|____________________>
+							i
+
  */
 
 #include <stdio.h>
@@ -10,34 +21,100 @@
 
 #include "MPI_Comms.h"
 //#include "FAKE_Comms.h"
-
 #include "pgmio.h"
+#include "arralloc.h"
+#include "precision.h"
 
 #define MAXITER   1500
-#define PRINTFREQ  200
+#define PRINTFREQ  20
+#define MAX_DIMS 2
 
-double boundaryval(int i, int m);
+RealNumber boundaryval(int i, int m);
 
 int main (int argc, char **argv) {
 
 
-	double old[MP+2][NP+2], new[MP+2][NP+2], edge[MP+2][NP+2];
-
-	double masterbuf[M][N];
-	double buf[MP][NP];
+	RealNumber **old, **new, **edge, **masterbuf, **buf;
 
 	int i, j, iter, maxiter;
 	char *filename;
-	double val;
+
+	int rank, comm;
+	int dims[MAX_DIMS];
+	int ***domains;
+
+	initialise_MP(&comm, &rank, dims);
+	
+	// The filename should be passed in to the program
+	filename = argv[1];
+
+	int M, N;	
+	pgmsize(filename, &M, &N);
+
+	// Configures the maximum domaian size
+	int MP = ceil((RealNumber)M / (RealNumber)dims[0]);
+	int NP = ceil((RealNumber)N / (RealNumber)dims[1]);
+
+	// Allocate space for the arrays
+	masterbuf = (RealNumber **)arralloc(sizeof(RealNumber), 2, M, N);
+	buf = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP, NP);
+
+	new = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP + 2, NP + 2);
+	old = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP + 2, NP + 2);
+	edge = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP + 2, NP + 2);
+
+	domains = (int ***)arraloc(sizeof(int), 3, dims[0], dims[1], 2);
+
+	int i, j, iter, maxiter;
+	RealNumber val;
 
 	printf("Processing %d x %d image\n", M, N);
 	printf("Number of iterations = %d\n", MAXITER);
 
-	filename = "edgenew192x128.pgm";
+	
 
 	printf("\nReading <%s>\n", filename);
-	pgmread(filename, buf, M, N);
+	pgmread(filename, masterbuf, M, N);
 	printf("\n");
+
+	// Configure the domain sizes, giving more work to the top and bottom processes
+	// since they have one less communication direction (non-periodic)
+	// but still ensuring that each row of processes has the same number of column pixels,
+	// and each column of processes has the same number of row pixels
+
+	int base_i = MP - 1;
+	int base_j = NP - 1;
+	int rem_i = M - (base_i*dims[0]);
+	int rem_j = M - (base_j*dims[1]);
+
+	for (i = 0; i < dims[0]; i++) {
+		for (j = 0; j < dims[1]; j++) {
+			domains[i][j][0] = base_i;
+			domains[i][j][1] = base_j;
+		}
+	}
+
+	// give the first extra row of pixels to the bottom set of processors
+	if (rem_j > 0) {
+		for (i = 0; i < dims[0]; i++) {
+			domains[i][0][0]++;
+		}
+		rem_j--;
+	}
+	// Put the remaining extra rows from the first row down until we run out
+	for (j = 0; j < rem_j; j++) { 
+		for (i = 0; i < dims[0]; i++) {
+			domains[i][j][0]++;
+		}
+	}
+
+	// The remaining columns can be distributed to all but the first
+	for (i = 1; i < rem_i; i++) {
+		for (j = 1; j < dims[1]; j++) {
+			domains[i][j][1]++;
+		}
+	}
+
 
 
 	for (i=1;i<MP+1;i++) {
@@ -68,12 +145,6 @@ int main (int argc, char **argv) {
 			printf("Iteration %d\n", iter);
 		}
 
-		/* Implement periodic boundary conditions on left and right sides */
-
-		for (j=1; j < N+1; j++) {
-		old[0][j]   = old[M][j];
-		old[M+1][j] = old[1][j];
-		}
 
 		for (i=1;i<M+1;i++) {
 			for (j=1;j<N+1;j++) {
@@ -102,11 +173,11 @@ int main (int argc, char **argv) {
 	pgmwrite(filename, buf, M, N);
 } 
 
-	double boundaryval(int i, int m) {
+RealNumber boundaryval(int i, int m) {
 
-	double val;
+	RealNumber val;
 
-	val = 2.0*((double)(i-1))/((double)(m-1));
+	val = 2.0*((RealNumber)(i-1))/((RealNumber)(m-1));
 	if (i >= m/2+1) val = 2.0-val;
   
 	return val;

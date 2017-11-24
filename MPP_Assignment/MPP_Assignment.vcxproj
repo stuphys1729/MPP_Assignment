@@ -160,6 +160,7 @@
     <ClInclude Include="FAKE_Comms.h" />
     <ClInclude Include="MPI_Comms.h" />
     <ClInclude Include="pgmio.h" />
+    <ClInclude Include="precision.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

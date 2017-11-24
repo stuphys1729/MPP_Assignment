@@ -47,5 +47,8 @@
     <ClInclude Include="arralloc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="precision.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
