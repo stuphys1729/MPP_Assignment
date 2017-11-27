@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
 	/*	We can send each processor the same (maximum) sized blocks, but they can
 		overwrite bits that are not part of their domain */
 
-	/*
+	
 
 	MPI_Datatype Send_section;
 	MPI_Type_vector(MP, NP, N, MPI_REALNUMBER, &Send_section);
@@ -215,9 +215,9 @@ int main(int argc, char **argv) {
 		
 	}
 	printf("About to scatter");
-	MPI_Scatterv(&masterbuf[0][0], counts, disps, Send_section, buf, 1, Recv_section, 0, comm);
+	//MPI_Scatterv(&masterbuf[0][0], counts, disps, Send_section, buf, 1, Recv_section, 0, comm);
 
-	*/
+	
 
 	/* Stuff for sending with cart_sub 
 
