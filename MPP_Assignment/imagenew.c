@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <mpi.h>
 
 #include "MPI_Comms.h"
 //#include "FAKE_Comms.h"
@@ -33,22 +34,36 @@
 #define TRUE 1
 #define FALSE 0
 
+#define M 192
+#define N 128
+
+#define P 4
+
+#define MP M/2
+#define NP N/2
+
 RealNumber boundaryval(int i, int m);
 
-int main (int argc, char **argv) {
+int main(int argc, char **argv) {
 
+	MPI_Init(NULL, NULL);
 
-	RealNumber **old, **new, **edge, **masterbuf, **buf, **tempbuf;
+	//RealNumber **old, **new, **edge, **masterbuf, **buf, **tempbuf;
+
+	RealNumber old[MP + 2][NP + 2], new[MP + 2][NP + 2], edge[MP + 2][NP + 2];
+
+	RealNumber masterbuf[M][N];
+	RealNumber buf[MP][NP];
 
 	int i, j, iter;
 	char *filename;
 
 	int rank, size;
-	int dims[MAX_DIMS];
-	int ***domains, *disps, *counts; //*hor_send_counts, *vert_send_counts, *hor_disps, *vert_disps;
+	int dims[MAX_DIMS], domains[2][2][2], counts[P], disps[P];
+	//int ***domains, *disps, *counts; //*hor_send_counts, *vert_send_counts, *hor_disps, *vert_disps;
 
 	//initialise_MP(&comm, &rank, &size, dims);
-	MPI_Init(NULL, NULL);
+	
 
 	// Initialise a cartesian topology
 	int periods[MAX_DIMS];
@@ -70,6 +85,7 @@ int main (int argc, char **argv) {
 	//filename = argv[1];
 	filename = "edgenew192x128.pgm";
 
+	/* Section for dynamic arrays
 	int M, N;	
 	pgmsize(filename, &M, &N);
 
@@ -89,14 +105,16 @@ int main (int argc, char **argv) {
 	disps = (int *)arralloc(sizeof(int), 1, size);
 	counts = (int *)arralloc(sizeof(int), 1, size);
 
-	RealNumber val;
+	*/
+
+	printf("rank %d is here\n",rank);
 
 	if (rank == 0) {
 
 		printf("Processing %d x %d image\n", M, N);
 		printf("Number of iterations = %d\n", MAXITER);
 
-		masterbuf = (RealNumber **)arralloc(sizeof(RealNumber), 2, M, N);
+		//masterbuf = (RealNumber **)arralloc(sizeof(RealNumber), 2, M, N);
 
 		printf("\nReading <%s>\n", filename);
 		pgmread(filename, masterbuf, M, N);
