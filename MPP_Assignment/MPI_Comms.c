@@ -8,15 +8,12 @@
 #define TRUE 1
 #define FALSE 0
 
-void initialise_MP(int* cart_comm, int* rank, int* dims) {
+void initialise_MP(int* cart_comm, int* rank, int *size, int* dims) {
 
-	int size;
-
-	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_Comm_size(MPI_COMM_WORLD, size);
 	MPI_Comm_rank(MPI_COMM_WORLD, rank);
 
 	// Initialise a cartesian topology
-	int* dims[MAX_DIMS];
 	int* periods[MAX_DIMS];
 
 	for (int i = 0; i < MAX_DIMS; i++) {
@@ -25,7 +22,7 @@ void initialise_MP(int* cart_comm, int* rank, int* dims) {
 		else periods[i] = FALSE;
 	}
 
-	MPI_Dims_create(size, MAX_DIMS, dims);
+	MPI_Dims_create(*size, MAX_DIMS, dims);
 	MPI_Cart_create(MPI_COMM_WORLD, MAX_DIMS, dims, periods, TRUE, cart_comm);
 
 }
