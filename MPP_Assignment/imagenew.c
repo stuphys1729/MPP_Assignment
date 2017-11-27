@@ -58,12 +58,12 @@ int main (int argc, char **argv) {
 		if (i == 0) periods[i] = TRUE;
 		else periods[i] = FALSE;
 	}
-
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm comm;
 	MPI_Dims_create(size, MAX_DIMS, dims);
 	MPI_Cart_create(MPI_COMM_WORLD, MAX_DIMS, dims, periods, TRUE, &comm);
 
-	MPI_Comm_size(comm, &size);
+	
 	MPI_Comm_rank(comm, &rank);
 	
 	// The filename should be passed in to the program
