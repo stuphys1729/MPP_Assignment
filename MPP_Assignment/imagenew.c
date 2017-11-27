@@ -126,7 +126,13 @@ int main(int argc, char **argv) {
 		but still ensuring that each row of processes has the same number of column pixels,
 		and each column of processes has the same number of row pixels
 	*/
-	printf("Determining Domain Sizes");
+	printf("Rank %d Determining Domain Sizes", rank);
+
+	RealNumber start = MPI_Wtime();
+	int IHATEMYLIFE = 0;
+	while (MPI_Wtime() - start < 1.0) {
+		IHATEMYLIFE++;
+	}
 
 	int base_i = MP - 1;
 	int base_j = NP - 1;
