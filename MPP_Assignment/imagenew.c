@@ -138,15 +138,13 @@ int main(int argc, char **argv) {
 	int rem_i = M - (base_i*dims[0]);
 	int rem_j = M - (base_j*dims[1]);
 
-	
-
 	for (i = 0; i < dims[0]; i++) {
 		for (j = 0; j < dims[1]; j++) {
 			domains[i][j][0] = base_i;
 			domains[i][j][1] = base_j;
 		}
 	}
-	/*
+	
 	// give the first extra row of pixels to the bottom set of processors
 	if (rem_j > 0) {
 		for (i = 0; i < dims[0]; i++) {
@@ -162,10 +160,12 @@ int main(int argc, char **argv) {
 	}
 
 	// The remaining columns can be distributed to all but the first
-	for (i = 1; i < rem_i; i++) {
+	for (i = dims[0]; i > 0; i--) {
+		if (rem_i == 0) break;
 		for (j = 1; j < dims[1]; j++) {
 			domains[i][j][1]++;
 		}
+		rem_i--;
 	}
 
 	printf("Determined Domain Sizes\n");
