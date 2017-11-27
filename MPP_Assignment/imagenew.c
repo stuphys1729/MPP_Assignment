@@ -214,8 +214,8 @@ int main(int argc, char **argv) {
 		}
 		
 	}
-	printf("About to scatter");
-	//MPI_Scatterv(&masterbuf[0][0], counts, disps, Send_section, buf, 1, Recv_section, 0, comm);
+	printf("About to scatter\n");
+	MPI_Scatterv(&masterbuf[0][0], counts, disps, Send_section, buf, 1, Recv_section, 0, comm);
 
 	
 
