@@ -95,8 +95,8 @@ int main(int argc, char **argv) {
 	int MP = ceil((RealNumber)M / (RealNumber)dims[0]);
 	int NP = ceil((RealNumber)N / (RealNumber)dims[1]);
 
-	printf("MP: %d", MP);
-	printf("NP: %d", NP);
+	//printf("MP: %d", MP);
+	//printf("NP: %d", NP);
 
 	// Allocate space for the arrays
 	tempbuf = (RealNumber **)arralloc(sizeof(RealNumber), 2, M, NP);
@@ -131,9 +131,7 @@ int main(int argc, char **argv) {
 		but still ensuring that each row of processes has the same number of column pixels,
 		and each column of processes has the same number of row pixels
 	*/
-	printf("Rank %d Determining Domain Sizes", rank);
-
-	/*
+	printf("Rank %d Determining Domain Sizes\n", rank);
 
 	int base_i = MP - 1;
 	int base_j = NP - 1;
@@ -148,7 +146,7 @@ int main(int argc, char **argv) {
 			domains[i][j][1] = base_j;
 		}
 	}
-
+	/*
 	// give the first extra row of pixels to the bottom set of processors
 	if (rem_j > 0) {
 		for (i = 0; i < dims[0]; i++) {
@@ -170,7 +168,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	printf("Determined Domain Sizes");
+	printf("Determined Domain Sizes\n");
 	
 
 	/* Now distribute the image across the processors */
