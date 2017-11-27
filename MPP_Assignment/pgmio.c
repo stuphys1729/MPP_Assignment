@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define MAXLINE 128
+#define MAXLINE 768
 
 /*
  *  Routine to get the size of a PGM data file

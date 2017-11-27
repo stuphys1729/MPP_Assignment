@@ -14,7 +14,7 @@ void initialise_MP(int* cart_comm, int* rank, int *size, int* dims) {
 	MPI_Comm_rank(MPI_COMM_WORLD, rank);
 
 	// Initialise a cartesian topology
-	int* periods[MAX_DIMS];
+	int periods[MAX_DIMS];
 
 	for (int i = 0; i < MAX_DIMS; i++) {
 		dims[i] = 0;

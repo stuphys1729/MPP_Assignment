@@ -49,8 +49,6 @@ int main (int argc, char **argv) {
 
 	//initialise_MP(&comm, &rank, &size, dims);
 	MPI_Init(NULL, NULL);
-	MPI_Comm_size(MPI_COMM_WORLD, &size);
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	// Initialise a cartesian topology
 	int periods[MAX_DIMS];
@@ -64,6 +62,9 @@ int main (int argc, char **argv) {
 	MPI_Comm comm;
 	MPI_Dims_create(size, MAX_DIMS, dims);
 	MPI_Cart_create(MPI_COMM_WORLD, MAX_DIMS, dims, periods, TRUE, &comm);
+
+	MPI_Comm_size(comm, &size);
+	MPI_Comm_rank(comm, &rank);
 	
 	// The filename should be passed in to the program
 	//filename = argv[1];
@@ -99,7 +100,7 @@ int main (int argc, char **argv) {
 
 		printf("\nReading <%s>\n", filename);
 		pgmread(filename, masterbuf, M, N);
-		printf("\n");
+		printf("Done.\n");
 	}
 
 	/*	Configure the domain sizes, giving more work to the top and bottom processes
@@ -107,6 +108,7 @@ int main (int argc, char **argv) {
 		but still ensuring that each row of processes has the same number of column pixels,
 		and each column of processes has the same number of row pixels
 	*/
+	printf("Determining Domain Sizes");
 
 	int base_i = MP - 1;
 	int base_j = NP - 1;
@@ -141,7 +143,7 @@ int main (int argc, char **argv) {
 		}
 	}
 
-	
+	printf("Determined Domain Sizes");
 	
 
 	/* Now distribute the image across the processors */
