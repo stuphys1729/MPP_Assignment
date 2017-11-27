@@ -95,6 +95,9 @@ int main(int argc, char **argv) {
 	int MP = ceil((RealNumber)M / (RealNumber)dims[0]);
 	int NP = ceil((RealNumber)N / (RealNumber)dims[1]);
 
+	printf("MP: %d", MP);
+	printf("NP: %d", NP);
+
 	// Allocate space for the arrays
 	tempbuf = (RealNumber **)arralloc(sizeof(RealNumber), 2, M, NP);
 	buf = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP, NP);
@@ -134,6 +137,8 @@ int main(int argc, char **argv) {
 	int base_j = NP - 1;
 	int rem_i = M - (base_i*dims[0]);
 	int rem_j = M - (base_j*dims[1]);
+
+	/*
 
 	for (i = 0; i < dims[0]; i++) {
 		for (j = 0; j < dims[1]; j++) {
