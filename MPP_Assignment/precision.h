@@ -1,6 +1,6 @@
 
 #include <mpi.h>
 
-typedef float RealNumber;
+typedef double RealNumber;
 
-#define MPI_REALNUMBER MPI_FLOAT
+#define MPI_REALNUMBER MPI_DOUBLE
