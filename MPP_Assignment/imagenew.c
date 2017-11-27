@@ -133,12 +133,14 @@ int main(int argc, char **argv) {
 	*/
 	printf("Rank %d Determining Domain Sizes", rank);
 
+	/*
+
 	int base_i = MP - 1;
 	int base_j = NP - 1;
 	int rem_i = M - (base_i*dims[0]);
 	int rem_j = M - (base_j*dims[1]);
 
-	/*
+	
 
 	for (i = 0; i < dims[0]; i++) {
 		for (j = 0; j < dims[1]; j++) {
@@ -313,9 +315,13 @@ int main(int argc, char **argv) {
 
 	/* Gather the data back to process 0 */
 
-	filename="imagenew192x128.pgm";
-	printf("\nWriting <%s>\n", filename);
-	//pgmwrite(filename, buf, M, N);
+	if (rank == 0) {
+
+		filename = "imagenew192x128.pgm";
+		printf("\nWriting <%s>\n", filename);
+		//pgmwrite(filename, buf, M, N);
+
+	}
 
 	MPI_Finalize();
 } 
