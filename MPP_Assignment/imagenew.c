@@ -133,8 +133,8 @@ int main(int argc, char **argv) {
 	*/
 	printf("Rank %d Determining Domain Sizes\n", rank);
 
-	int base_i = MP - 1;
-	int base_j = NP - 1;
+	int base_i = floor((RealNumber)M / (RealNumber)dims[0]);
+	int base_j = floor((RealNumber)M / (RealNumber)dims[1]);
 	int rem_i = M - (base_i*dims[0]);
 	int rem_j = M - (base_j*dims[1]);
 
