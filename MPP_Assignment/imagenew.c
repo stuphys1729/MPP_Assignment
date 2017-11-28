@@ -220,34 +220,36 @@ int main(int argc, char **argv) {
 	printf("About to scatter\n");
 	//MPI_Scatterv(masterbuf, counts, disps, Small_send_section, buf, MP*NP, MPI_REALNUMBER, 0, comm);
 	MPI_Scatterv(masterbuf, counts, disps, Small_send_section, &edge[1][1], 1, Recv_section, 0, comm);
-	//MPI_Gatherv(buf, MP*NP, MPI_REALNUMBER, masterbuf, counts, disps, Small_send_section, 0, comm);
-	MPI_Gatherv(&edge[1][1], 1, Recv_section, masterbuf, counts, disps, Small_send_section, 0, comm);
-	
-	
 
-	/*
-	for (i=1;i<MP+1;i++) {
-		for (j=1;j<NP+1;j++) {
-			edge[i][j]=buf[i-1][j-1];
-		}
-	}
-
-	for (i=0; i<M+2;i++) {
-		for (j=0;j<N+2;j++) {
+	for (i=0; i<MP+2;i++) {
+		for (j=0;j<NP+2;j++) {
 			old[i][j]=255.0;
 		}
 	}
-	*/
-	/* Set fixed boundary conditions on the bottom and top edges 
-	for (i=1; i < M+1; i++) {
-		// compute sawtooth value 
-     
-		val = boundaryval(i, M);
 
-		old[i][0]   = (int)(255.0*val);
-		old[i][N+1] = (int)(255.0*(1.0-val));
+	int up, down, left, right;
+	RealNumber val;
+
+	MPI_Cart_shift(comm, 0, 1, &left, &right);
+	MPI_Cart_shift(comm, 1, 1, &down, &up);
+
+	if (up == MPI_PROC_NULL) {
+		printf("Rank %d is doing top boundary conditions\n", rank);
+		for (i = 1; i < MP; i++) {
+
+			val = boundaryval(i, M);
+			old[i][0] = (int)(255.0*val);
+		}
 	}
-	*/
+
+	if (down == MPI_PROC_NULL) {
+		printf("Rank %d is doing bottom boundary conditions\n", rank);
+		for (i = 1; i < MP; i++) {
+
+			val = boundaryval(i, M);
+			old[i][NP+1] = (int)(255.0*val);
+		}
+	}
 
 	/*
 	for (iter=1;iter<=MAXITER; iter++) {
@@ -273,6 +275,8 @@ int main(int argc, char **argv) {
 	//printf("\nFinished %d iterations\n", iter-1);
 
 	/* Gather the data back to process 0 */
+	//MPI_Gatherv(buf, MP*NP, MPI_REALNUMBER, masterbuf, counts, disps, Small_send_section, 0, comm);
+	MPI_Gatherv(&edge[1][1], 1, Recv_section, masterbuf, counts, disps, Small_send_section, 0, comm);
 
 	if (rank == 0) {
 
