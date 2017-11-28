@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
 		but still ensuring that each row of processes has the same number of column pixels,
 		and each column of processes has the same number of row pixels
 	*/
-	printf("Rank %d Determining Domain Sizes\n", rank);
+	//printf("Rank %d Determining Domain Sizes\n", rank);
 
 	int base_i = floor((RealNumber)M / (RealNumber)dims[0]);
 	int base_j = floor((RealNumber)N / (RealNumber)dims[1]);
@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	// give the first extra row of pixels to the bottom set of processors
+	// give the first extra row of pixels to the top set of processors
 	if (rem_j > 0) {
 		for (i = 0; i < dims[0]; i++) {
 			domains[i][0][0]++;
@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
 		overwrite bits that are not part of their domain */
 
 	int sizes[MAX_DIMS] = { M,N };
-	int sub_sizes[MAX_DIMS] = { MP,NP };
+	int sub_sizes[MAX_DIMS] = { 1,NP };
 	int starts[MAX_DIMS] = { 0,0 };
 
 	MPI_Datatype Send_section;
@@ -230,6 +230,16 @@ int main(int argc, char **argv) {
 		}
 		
 	}
+
+	MPI_Status status;
+
+	if (rank == 0) {
+		MPI_Ssend(&masterbuf[0][0], MP, Small_send_section, 1, 0, comm);
+	}
+	if (rank == 1) {
+		MPI_Recv(&edge[1][1], 1, Recv_section, 0, 0, comm, &status);
+	}
+
 	printf("About to scatter\n");
 	//MPI_Scatterv(&masterbuf[0][0], counts, disps, Send_section, &buf[1][1], 1, Recv_section, 0, comm);
 
