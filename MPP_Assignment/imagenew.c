@@ -223,7 +223,7 @@ int main(int argc, char **argv) {
 	for (i = 0; i < dims[0]; i++) {
 
 		for (j = 0; j < dims[1]; j++) {
-			disps[i + j] = offset;
+			disps[i*dims[0] + j] = offset;
 			offset++;
 		}
 		offset = MP*dims[1];
@@ -245,7 +245,9 @@ int main(int argc, char **argv) {
 	}
 	*/
 	printf("About to scatter\n");
-	MPI_Scatterv(masterbuf, counts, disps, Send_section, buf, 1, Recv_section, 0, comm);
+	MPI_Scatterv(masterbuf, counts, disps, Small_send_section, buf, 1, Recv_section, 0, comm);
+
+	MPI_Gatherv(buf, MP*NP, MPI_REALNUMBER, masterbuf, counts, disps, Small_send_section, 0, comm);
 
 	
 
@@ -347,7 +349,7 @@ int main(int argc, char **argv) {
 
 		filename = "imagenew192x128.pgm";
 		printf("\nWriting <%s>\n", filename);
-		//pgmwrite(filename, buf, M, N);
+		pgmwrite(filename, masterbuf, M, N);
 
 	}
 
