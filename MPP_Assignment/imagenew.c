@@ -27,7 +27,7 @@
 #include "arralloc.h"
 #include "precision.h"
 
-#define MAXITER 1
+#define MAXITER 1500
 #define PRINTFREQ  20
 #define MAX_DIMS 2
 
@@ -252,13 +252,14 @@ int main(int argc, char **argv) {
 			old[i][NP+1] = (int)(255.0*val);
 		}
 	}
+	/*
 	MPI_Datatype sides, top_bottom;
 	MPI_Type_contiguous(MP, MPI_REALNUMBER, &sides);
 	MPI_Type_vector(MP, 1, NP + 2, MPI_REALNUMBER, &top_bottom);
 	
 	MPI_Request send_up, send_down, send_left, send_right;
 	MPI_Request recv_up, recv_down, recv_left, recv_right;
-
+	*/
 	for (iter= 1;iter<=MAXITER; iter++) {
 		if (iter%PRINTFREQ == 0) {
 			printf("Iteration %d\n", iter);
@@ -282,8 +283,8 @@ int main(int argc, char **argv) {
 			}
 		}
 	
-		for (i=1;i<M+1;i++) {
-			for (j=1;j<N+1;j++) {
+		for (i=1;i<MP;i++) {
+			for (j=1;j<NP;j++) {
 				old[i][j]=new[i][j];
 			}
 		}
