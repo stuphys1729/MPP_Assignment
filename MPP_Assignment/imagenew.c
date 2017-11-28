@@ -233,14 +233,23 @@ int main(int argc, char **argv) {
 
 	MPI_Status status;
 
+	int a = 5;
+	int b;
+	if (rank == 0) {
+		MPI_Ssend(&a, 1, MPI_INT, 1, 0, comm);
+	}
+	if (rank == 1) {
+		MPI_Recv(&b, 1, MPI_INT, 0, 0, comm, &status);
+	}
+
+	/*
 	if (rank == 0) {
 		MPI_Ssend(&masterbuf[0][0], 1, Small_send_section, 1, 0, comm);
 	}
 	if (rank == 1) {
 		MPI_Recv(&buf[0][0], NP, MPI_REALNUMBER, 0, 0, comm, &status);
-
 	}
-
+	*/
 	printf("About to scatter\n");
 	//MPI_Scatterv(&masterbuf[0][0], counts, disps, Send_section, &buf[1][1], 1, Recv_section, 0, comm);
 
