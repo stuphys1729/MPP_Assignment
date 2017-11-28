@@ -27,7 +27,7 @@
 #include "arralloc.h"
 #include "precision.h"
 
-#define MAXITER 1500
+#define MAXITER 1
 #define PRINTFREQ  20
 #define MAX_DIMS 2
 
@@ -252,29 +252,31 @@ int main(int argc, char **argv) {
 			old[i][NP+1] = (int)(255.0*val);
 		}
 	}
-	/*
+	
 	MPI_Datatype sides, top_bottom;
 	MPI_Type_contiguous(MP, MPI_REALNUMBER, &sides);
 	MPI_Type_vector(MP, 1, NP + 2, MPI_REALNUMBER, &top_bottom);
 	
-	MPI_Request send_up, send_down, send_left, send_right;
-	MPI_Request recv_up, recv_down, recv_left, recv_right;
-	*/
+	//MPI_Request send_up, send_down, send_left, send_right;
+	//MPI_Request recv_up, recv_down, recv_left, recv_right;
+	MPI_Request requests[2*MAX_DIMS*MAX_DIMS];
+	MPI_Status statuses[2*MAX_DIMS*MAX_DIMS];
+	
 	for (iter= 1;iter<=MAXITER; iter++) {
 		if (iter%PRINTFREQ == 0) {
 			printf("Iteration %d\n", iter);
 		}
-		/*
-		MPI_Isend(&old[1][1], 1, sides, left, DEFAULT_TAG, comm, send_left);
-		MPI_Isend(&old[MP][1], 1, sides, right, DEFAULT_TAG, comm, send_right);
-		MPI_Isend(&old[1][1], 1, top_bottom, down, DEFAULT_TAG, comm, send_down);
-		MPI_Isend(&old[1][NP], 1, top_bottom, up, DEFAULT_TAG, comm, send_up);
+		
+		MPI_Isend(&old[1][1], 1, sides, left, DEFAULT_TAG, comm, &requests[0]);// send_left);
+		MPI_Isend(&old[MP][1], 1, sides, right, DEFAULT_TAG, comm, &requests[1]);//send_right);
+		MPI_Isend(&old[1][1], 1, top_bottom, down, DEFAULT_TAG, comm, &requests[2]);//send_down);
+		MPI_Isend(&old[1][NP], 1, top_bottom, up, DEFAULT_TAG, comm, &requests[3]);//send_up);
 
-		MPI_Irecv(&old[0][1], 1, sides, left, DEFAULT_TAG, comm, recv_left);
-		MPI_Irecv(&old[MP][1], 1, sides, right, DEFAULT_TAG, comm, recv_right);
-		MPI_Irecv(&old[1][0], 1, top_bottom, down, DEFAULT_TAG, comm, recv_down);
-		MPI_Irecv(&old[1][NP], 1, top_bottom, up, DEFAULT_TAG, comm, recv_up);
-		*/
+		MPI_Irecv(&old[0][1], 1, sides, left, DEFAULT_TAG, comm, &requests[4]);//recv_left);
+		MPI_Irecv(&old[MP][1], 1, sides, right, DEFAULT_TAG, comm, &requests[5]);//recv_right);
+		MPI_Irecv(&old[1][0], 1, top_bottom, down, DEFAULT_TAG, comm, &requests[6]);//recv_down);
+		MPI_Irecv(&old[1][NP], 1, top_bottom, up, DEFAULT_TAG, comm, &requests[7]);//recv_up);
+		
 
 		for (i = 2; i < MP; i++) {
 			for (j = 2; j < NP; j++) {
@@ -288,6 +290,9 @@ int main(int argc, char **argv) {
 				old[i][j]=new[i][j];
 			}
 		}
+
+		MPI_Waitall(2 * MAX_DIMS*MAX_DIMS, requests, statuses);
+
 	}
 	
 	//printf("\nFinished %d iterations\n", iter-1);
