@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
 		overwrite bits that are not part of their domain */
 
 	int sizes[MAX_DIMS] = { M,N };
-	int sub_sizes[MAX_DIMS] = { 2,2 };
+	int sub_sizes[MAX_DIMS] = { MP,NP };
 	int starts[MAX_DIMS] = { 0,0 };
 
 	int MPI_Size;
@@ -208,9 +208,9 @@ int main(int argc, char **argv) {
 	MPI_Type_create_subarray(2, sizes, sub_sizes, starts, MPI_ORDER_C, MPI_REALNUMBER, &Send_section);
 	/*	We change MPI's understanding of where each section ends to be just one number after
 		it starts to allow us to give precise locations of domain beginnings	*/
-	//MPI_Type_create_resized(Send_section, 0, MPI_Size, &Small_send_section);
-	//MPI_Type_commit(&Small_send_section);
-	MPI_Type_commit(&Send_section);
+	MPI_Type_create_resized(Send_section, 0, NP*MPI_Size, &Small_send_section);
+	MPI_Type_commit(&Small_send_section);
+	//MPI_Type_commit(&Send_section);
 
 	MPI_Datatype Recv_section;
 	MPI_Type_vector(MP, NP, NP + 2, MPI_REALNUMBER, &Recv_section);
@@ -224,28 +224,24 @@ int main(int argc, char **argv) {
 
 		for (j = 0; j < dims[1]; j++) {
 			disps[i + j] = offset;
-			if (j < (dims[1]-1)) offset += domains[i][j][0];
+			offset++;
 		}
-		if (i == (size - 1)) break;
-		offset = 0;
-		for (int x = 0; x < i + 1; x++) {
-			offset += domains[x][0][1] * M;
-		}
+		offset = MP*dims[1];
 		
 	}
 
 	MPI_Status status;
 
-	
+	/*
 	if (rank == 0) {
 		MPI_Ssend(masterbuf, 1, Send_section, 1, 0, comm);
 	}
 	if (rank == 1) {
 		MPI_Recv(buf, 4, MPI_REALNUMBER, 0, 0, comm, &status);
 	}
-	
+	*/
 	printf("About to scatter\n");
-	//MPI_Scatterv(&masterbuf[0][0], counts, disps, Send_section, &buf[1][1], 1, Recv_section, 0, comm);
+	MPI_Scatterv(masterbuf, counts, disps, Send_section, buf, 1, Recv_section, 0, comm);
 
 	
 
