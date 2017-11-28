@@ -208,8 +208,9 @@ int main(int argc, char **argv) {
 	MPI_Type_create_subarray(2, sizes, sub_sizes, starts, MPI_ORDER_C, MPI_REALNUMBER, &Send_section);
 	/*	We change MPI's understanding of where each section ends to be just one number after
 		it starts to allow us to give precise locations of domain beginnings	*/
-	MPI_Type_create_resized(Send_section, 0, MPI_Size, &Small_send_section);
-	MPI_Type_commit(&Small_send_section);
+	//MPI_Type_create_resized(Send_section, 0, MPI_Size, &Small_send_section);
+	//MPI_Type_commit(&Small_send_section);
+	MPI_Type_commit(&Send_section);
 
 	MPI_Datatype Recv_section;
 	MPI_Type_vector(MP, NP, NP + 2, MPI_REALNUMBER, &Recv_section);
@@ -237,7 +238,7 @@ int main(int argc, char **argv) {
 
 	
 	if (rank == 0) {
-		MPI_Ssend(&masterbuf[0][0], 1, Small_send_section, 1, 0, comm);
+		MPI_Ssend(&masterbuf[0][0], 1, Send_section, 1, 0, comm);
 	}
 	if (rank == 1) {
 		MPI_Recv(&buf[0][0], NP, MPI_REALNUMBER, 0, 0, comm, &status);
