@@ -27,12 +27,13 @@
 #include "arralloc.h"
 #include "precision.h"
 
-#define MAXITER   1500
+#define MAXITER 1
 #define PRINTFREQ  20
 #define MAX_DIMS 2
 
 #define TRUE 1
 #define FALSE 0
+#define DEFAULT_TAG 0
 /*
 #define M 192
 #define N 128
@@ -67,7 +68,7 @@ int main(int argc, char **argv) {
 	//initialise_MP(&comm, &rank, &size, dims);
 	
 
-	// Initialise a cartesian topology
+	/* Initialise a cartesian topology */
 	int periods[MAX_DIMS];
 
 	for (i = 0; i < MAX_DIMS; i++) {
@@ -86,6 +87,7 @@ int main(int argc, char **argv) {
 	// The filename should be passed in to the program
 	//filename = argv[1];
 	filename = "edgenew192x128.pgm";
+	//filename = "edgenew768x768.pgm";
 
 	/* Section for dynamic arrays */
 	int M, N;	
@@ -100,7 +102,7 @@ int main(int argc, char **argv) {
 
 	// Allocate space for the arrays
 	tempbuf = (RealNumber **)arralloc(sizeof(RealNumber), 2, M, NP);
-	buf = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP, NP);
+	//buf = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP, NP);
 
 	new = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP + 2, NP + 2);
 	old = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP + 2, NP + 2);
@@ -112,7 +114,7 @@ int main(int argc, char **argv) {
 
 	
 
-	printf("rank %d is here\n",rank);
+	//printf("rank %d is here\n",rank);
 
 	if (rank == 0) {
 
@@ -123,7 +125,7 @@ int main(int argc, char **argv) {
 
 		printf("\nReading <%s>\n", filename);
 		pgmread(filename, masterbuf, M, N);
-		printf("Done.\n");
+		//printf("Done.\n");
 	}
 
 	/*	Configure the domain sizes, giving more work to the top and bottom processes
@@ -250,16 +252,31 @@ int main(int argc, char **argv) {
 			old[i][NP+1] = (int)(255.0*val);
 		}
 	}
+	MPI_Datatype sides, top_bottom;
+	MPI_Type_contiguous(MP, MPI_REALNUMBER, &sides);
+	MPI_Type_vector(MP, 1, NP + 2, MPI_REALNUMBER, &top_bottom);
+	
+	MPI_Request send_up, send_down, send_left, send_right;
+	MPI_Request recv_up, recv_down, recv_left, recv_right;
 
-	/*
-	for (iter=1;iter<=MAXITER; iter++) {
+	for (iter= 1;iter<=MAXITER; iter++) {
 		if (iter%PRINTFREQ == 0) {
 			printf("Iteration %d\n", iter);
 		}
+		/*
+		MPI_Isend(&old[1][1], 1, sides, left, DEFAULT_TAG, comm, send_left);
+		MPI_Isend(&old[MP][1], 1, sides, right, DEFAULT_TAG, comm, send_right);
+		MPI_Isend(&old[1][1], 1, top_bottom, down, DEFAULT_TAG, comm, send_down);
+		MPI_Isend(&old[1][NP], 1, top_bottom, up, DEFAULT_TAG, comm, send_up);
 
+		MPI_Irecv(&old[0][1], 1, sides, left, DEFAULT_TAG, comm, recv_left);
+		MPI_Irecv(&old[MP][1], 1, sides, right, DEFAULT_TAG, comm, recv_right);
+		MPI_Irecv(&old[1][0], 1, top_bottom, down, DEFAULT_TAG, comm, recv_down);
+		MPI_Irecv(&old[1][NP], 1, top_bottom, up, DEFAULT_TAG, comm, recv_up);
+		*/
 
-		for (i=1;i<M+1;i++) {
-			for (j=1;j<N+1;j++) {
+		for (i = 2; i < MP; i++) {
+			for (j = 2; j < NP; j++) {
 			new[i][j]=0.25*(old[i-1][j]+old[i+1][j]+old[i][j-1]+old[i][j+1]
 					- edge[i][j]);
 			}
@@ -271,16 +288,17 @@ int main(int argc, char **argv) {
 			}
 		}
 	}
-	*/
+	
 	//printf("\nFinished %d iterations\n", iter-1);
 
 	/* Gather the data back to process 0 */
 	//MPI_Gatherv(buf, MP*NP, MPI_REALNUMBER, masterbuf, counts, disps, Small_send_section, 0, comm);
-	MPI_Gatherv(&edge[1][1], 1, Recv_section, masterbuf, counts, disps, Small_send_section, 0, comm);
+	MPI_Gatherv(&old[1][1], 1, Recv_section, masterbuf, counts, disps, Small_send_section, 0, comm);
 
 	if (rank == 0) {
 
 		filename = "imagenew192x128.pgm";
+		//filename = "imagenew768x768.pgm";
 		printf("\nWriting <%s>\n", filename);
 		pgmwrite(filename, masterbuf, M, N);
 
