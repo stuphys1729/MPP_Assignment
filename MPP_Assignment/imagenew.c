@@ -229,10 +229,14 @@ int main(int argc, char **argv) {
 		offset = MP*dims[1];
 		
 	}
-
-	MPI_Status status;
-
+	if (rank == 0) {
+		for (i = 0; i < size; i++) {
+			printf("disp: %d\n", disps[i]);
+		}
+	}
 	/*
+	MPI_Status status;
+	
 	if (rank == 0) {
 		MPI_Ssend(masterbuf, 1, Send_section, 1, 0, comm);
 	}
