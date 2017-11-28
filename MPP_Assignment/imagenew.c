@@ -178,20 +178,6 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	/* Now distribute the image across the processors */
-
-	/* Stuff for sending as blocks
-	MPI_Datatype Base_section;
-	MPI_Datatype Extra_row;
-	MPI_Datatype Extra_column;
-	MPI_Datatype Max_section;
-
-	MPI_Type_vector(MP-1, NP-1, N, MPI_REALNUMBER, &Base_section);
-	MPI_Type_vector(MP-1, NP, N, MPI_REALNUMBER, &Extra_row);
-	MPI_Type_vector(MP, NP-1, N, MPI_REALNUMBER, &Extra_column);
-	MPI_Type_vector(MP, NP, N, MPI_REALNUMBER, &Max_section);
-	*/
-
 	/* Stuff for sending same-size blocks */
 	/*	We can send each processor the same (maximum) sized blocks, but they can
 		overwrite bits that are not part of their domain */
@@ -200,17 +186,13 @@ int main(int argc, char **argv) {
 	int sub_sizes[MAX_DIMS] = { MP,NP };
 	int starts[MAX_DIMS] = { 0,0 };
 
-	//int MPI_Size;
-	//MPI_Type_size(MPI_REALNUMBER, &MPI_Size);
 	MPI_Datatype Send_section;
 	MPI_Datatype Small_send_section;
-	//MPI_Type_vector(MP, NP, N, MPI_REALNUMBER, &Send_section);
 	MPI_Type_create_subarray(2, sizes, sub_sizes, starts, MPI_ORDER_C, MPI_REALNUMBER, &Send_section);
 	/*	We change MPI's understanding of where each section ends to be just one number after
 		it starts to allow us to give precise locations of domain beginnings	*/
 	MPI_Type_create_resized(Send_section, 0, NP*sizeof(RealNumber), &Small_send_section);
 	MPI_Type_commit(&Small_send_section);
-	//MPI_Type_commit(&Send_section);
 
 	MPI_Datatype Recv_section;
 	MPI_Type_vector(MP, NP, NP + 2, MPI_REALNUMBER, &Recv_section);
@@ -223,7 +205,7 @@ int main(int argc, char **argv) {
 	for (i = 0; i < dims[0]; i++) {
 
 		for (j = 0; j < dims[1]; j++) {
-			disps[i*dims[0] + j] = offset;
+			disps[i*dims[1] + j] = offset;
 			offset++;
 		}
 		offset = MP*dims[1];
@@ -236,56 +218,12 @@ int main(int argc, char **argv) {
 	}
 
 	printf("About to scatter\n");
-	MPI_Scatterv(masterbuf, counts, disps, Small_send_section, buf, MP*NP, MPI_REALNUMBER, 0, comm);
-
-	MPI_Gatherv(buf, MP*NP, MPI_REALNUMBER, masterbuf, counts, disps, Small_send_section, 0, comm);
-
+	//MPI_Scatterv(masterbuf, counts, disps, Small_send_section, buf, MP*NP, MPI_REALNUMBER, 0, comm);
+	MPI_Scatterv(masterbuf, counts, disps, Small_send_section, &edge[1][1], 1, Recv_section, 0, comm);
+	//MPI_Gatherv(buf, MP*NP, MPI_REALNUMBER, masterbuf, counts, disps, Small_send_section, 0, comm);
+	MPI_Gatherv(&edge[1][1], 1, Recv_section, masterbuf, counts, disps, Small_send_section, 0, comm);
 	
-
-	/* Stuff for sending with cart_sub 
-
-	hor_send_counts = (int *)arraloc(sizeof(int), 1, dims[0]);
-	vert_send_counts = (int *)arraloc(sizeof(int), 1, dims[1]);
-	vert_disps = (int *)arraloc(sizeof(int), 1, dims[1]);
-	hor_disps = (int *)arraloc(sizeof(int), 1, dims[0]);
-
-	int offset = 0;
-	for (j = 0; j < dims[1]; j++) {
-	vert_send_counts[j] = domains[0][j][1];
-	vert_disps[j] = offset;
-	offset += vert_send_counts[j];
-	}
-	offset = 0;
-	for (i = 0; i < dims[0]; i++) {
-	hor_send_counts[i] = domains[i][0][0];
-	hor_disps = offset;
-	offset += hor_send_counts[i];
-	}
-
-	// Sending down
-	MPI_Datatype Base_row;
-
-	MPI_Type_vector(M, 1, N, MPI_REALNUMBER, &Base_row);
-
-	MPI_Comm vertical;
-	MPI_Cart_sub(comm, (FALSE, TRUE), &vertical);
-
-	MPI_Scatterv(&masterbuf[0][0], vert_send_counts, vert_disps, Base_row, &tempbuf, NP, Base_row, 0, vertical);
-
-
-	// Sending across
-	MPI_Datatype Base_column;
-	MPI_Datatype Extra_column;
-
-	MPI_Type_vector(1, NP - 1, N, MPI_REALNUMBER, &Base_column);
-	MPI_Type_vector(1, NP, N, MPI_REALNUMBER, &Extra_column);
 	
-	MPI_Comm horizontal;
-	MPI_Cart_sub(comm, (TRUE, FALSE), &horizontal);
-
-	MPI_Scatterv(&tempbuf[0][0], hor_send_counts, hor_disps, )
-
-	*/
 
 	/*
 	for (i=1;i<MP+1;i++) {
