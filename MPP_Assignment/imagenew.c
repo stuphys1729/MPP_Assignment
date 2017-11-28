@@ -234,10 +234,11 @@ int main(int argc, char **argv) {
 	MPI_Status status;
 
 	if (rank == 0) {
-		MPI_Ssend(&masterbuf[0][0], MP, Small_send_section, 1, 0, comm);
+		MPI_Ssend(&masterbuf[0][0], 1, Small_send_section, 1, 0, comm);
 	}
 	if (rank == 1) {
-		MPI_Recv(&edge[1][1], 1, Recv_section, 0, 0, comm, &status);
+		MPI_Recv(&buf[0][0], NP, MPI_REALNUMBER, 0, 0, comm, &status);
+
 	}
 
 	printf("About to scatter\n");
