@@ -236,7 +236,7 @@ int main(int argc, char **argv) {
 	}
 
 	printf("About to scatter\n");
-	MPI_Scatterv(masterbuf, counts, disps, Small_send_section, buf, 1, Recv_section, 0, comm);
+	MPI_Scatterv(masterbuf, counts, disps, Small_send_section, buf, MP*NP, MPI_REALNUMBER, 0, comm);
 
 	MPI_Gatherv(buf, MP*NP, MPI_REALNUMBER, masterbuf, counts, disps, Small_send_section, 0, comm);
 
