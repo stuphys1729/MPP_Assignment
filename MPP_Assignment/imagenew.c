@@ -134,9 +134,9 @@ int main(int argc, char **argv) {
 	printf("Rank %d Determining Domain Sizes\n", rank);
 
 	int base_i = floor((RealNumber)M / (RealNumber)dims[0]);
-	int base_j = floor((RealNumber)M / (RealNumber)dims[1]);
+	int base_j = floor((RealNumber)N / (RealNumber)dims[1]);
 	int rem_i = M - (base_i*dims[0]);
-	int rem_j = M - (base_j*dims[1]);
+	int rem_j = N - (base_j*dims[1]);
 
 	for (i = 0; i < dims[0]; i++) {
 		for (j = 0; j < dims[1]; j++) {
@@ -168,14 +168,15 @@ int main(int argc, char **argv) {
 		rem_i--;
 	}
 
-	printf("Determined Domain Sizes\n");
-	for (i = 0; i < dims[0]; i++) {
-		for (j = 0; j < dims[1]; j++) {
-			printf("(%d,%d) ", dims[i][j][0], dims[i][j][1]);
+	if (rank == 0) {
+		printf("Determined Domain Sizes\n");
+		for (i = 0; i < dims[0]; i++) {
+			for (j = 0; j < dims[1]; j++) {
+				printf("(%d,%d) ", domains[i][j][0], domains[i][j][1]);
+			}
+			printf("\n");
 		}
-		printf("\n");
 	}
-	
 
 	/* Now distribute the image across the processors */
 
@@ -205,7 +206,7 @@ int main(int argc, char **argv) {
 	MPI_Type_create_subarray(2, sizes, sub_sizes, starts, MPI_ORDER_C, MPI_REALNUMBER, &Send_section);
 	/*	We change MPI's understanding of where each section ends to be just one number after
 		it starts to allow us to give precise locations of domain beginnings	*/
-	MPI_Type_create_resized(&Send_section, 0, sizeof(RealNumber), &Small_send_section);
+	MPI_Type_create_resized(Send_section, 0, sizeof(RealNumber), &Small_send_section);
 	MPI_Type_commit(&Small_send_section);
 
 	MPI_Datatype Recv_section;
