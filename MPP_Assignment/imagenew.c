@@ -169,6 +169,12 @@ int main(int argc, char **argv) {
 	}
 
 	printf("Determined Domain Sizes\n");
+	for (i = 0; i < dims[0]; i++) {
+		for (j = 0; j < dims[1]; j++) {
+			printf("(%d,%d) ", dims[i][j][0], dims[i][j][1]);
+		}
+		printf("\n");
+	}
 	
 
 	/* Now distribute the image across the processors */
@@ -189,13 +195,22 @@ int main(int argc, char **argv) {
 	/*	We can send each processor the same (maximum) sized blocks, but they can
 		overwrite bits that are not part of their domain */
 
-	
+	int sizes[MAX_DIMS] = { M,N };
+	int sub_sizes[MAX_DIMS] = { MP,NP };
+	int starts[MAX_DIMS] = { 0,0 };
 
 	MPI_Datatype Send_section;
-	MPI_Type_vector(MP, NP, N, MPI_REALNUMBER, &Send_section);
+	MPI_Datatype Small_send_section;
+	//MPI_Type_vector(MP, NP, N, MPI_REALNUMBER, &Send_section);
+	MPI_Type_create_subarray(2, sizes, sub_sizes, starts, MPI_ORDER_C, MPI_REALNUMBER, &Send_section);
+	/*	We change MPI's understanding of where each section ends to be just one number after
+		it starts to allow us to give precise locations of domain beginnings	*/
+	MPI_Type_create_resized(&Send_section, 0, sizeof(RealNumber), &Small_send_section);
+	MPI_Type_commit(&Small_send_section);
 
 	MPI_Datatype Recv_section;
 	MPI_Type_vector(MP, NP, NP + 2, MPI_REALNUMBER, &Recv_section);
+	MPI_Type_commit(&Recv_section);
 
 	for (i = 0; i < size; i++) {
 		counts[i] = 1;
@@ -215,7 +230,7 @@ int main(int argc, char **argv) {
 		
 	}
 	printf("About to scatter\n");
-	MPI_Scatterv(&masterbuf[0][0], counts, disps, Send_section, buf, 1, Recv_section, 0, comm);
+	//MPI_Scatterv(&masterbuf[0][0], counts, disps, Send_section, &buf[1][1], 1, Recv_section, 0, comm);
 
 	
 
