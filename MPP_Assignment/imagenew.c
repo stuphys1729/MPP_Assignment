@@ -86,8 +86,8 @@ int main(int argc, char **argv) {
 	
 	// The filename should be passed in to the program
 	//filename = argv[1];
-	filename = "edgenew192x128.pgm";
-	//filename = "edgenew768x768.pgm";
+	//filename = "edgenew192x128.pgm";
+	filename = "edgenew768x768.pgm";
 	//filename = "edgenew512x384.pgm";
 
 	/* Section for dynamic arrays */
@@ -237,11 +237,11 @@ int main(int argc, char **argv) {
 	MPI_Cart_shift(comm, 1, 1, &down, &up);
 
 	if (rank == 0) {
-		printf("Rank %d has neighbours:", rank);
-		printf("up: %d", up);
-		printf("down: %d", down);
-		printf("left: %d", left);
-		printf("right: %d", right);
+		printf("Rank %d has neighbours:1n", rank);
+		printf("up: %d\n", up);
+		printf("down: %d\n", down);
+		printf("left: %d\n", left);
+		printf("right: %d\n", right);
 	}
 
 	if (up == MPI_PROC_NULL) {
@@ -294,8 +294,28 @@ int main(int argc, char **argv) {
 			}
 		}
 		MPI_Waitall(2 * MAX_DIMS*MAX_DIMS, requests, statuses);
-
 		
+		i = 1;
+		for (j = 1; j < NP + 1; j++) {
+			new[i][j] = 0.25*(old[i - 1][j] + old[i + 1][j] + old[i][j - 1] + old[i][j + 1]
+				- edge[i][j]);
+		}
+		i = MP;
+		for (j = 1; j < NP + 1; j++) {
+			new[i][j] = 0.25*(old[i - 1][j] + old[i + 1][j] + old[i][j - 1] + old[i][j + 1]
+				- edge[i][j]);
+		}
+		j = 1;
+		for (i = 1; i < MP + 1; i++) {
+			new[i][j] = 0.25*(old[i - 1][j] + old[i + 1][j] + old[i][j - 1] + old[i][j + 1]
+				- edge[i][j]);
+		}
+		j = NP;
+		for (i = 1; i < MP + 1; i++) {
+			new[i][j] = 0.25*(old[i - 1][j] + old[i + 1][j] + old[i][j - 1] + old[i][j + 1]
+				- edge[i][j]);
+		}
+		/*
 		// Calculate the sides
 		for (j = 1; j < NP + 1; j++) {
 			new[1][j] = 0.25*(old[0][j] + old[2][j] + old[1][j - 1] + old[1][j + 1]
@@ -310,7 +330,7 @@ int main(int argc, char **argv) {
 			new[i][NP] = 0.25*(old[i - 1][NP] + old[i + 1][NP] + old[i][NP - 1] + old[i][NP + 1]
 				- edge[i][NP]);
 		}
-		
+		*/
 
 		for (i = 1; i<MP+1; i++) {
 			for (j = 1; j<NP+1; j++) {
@@ -328,8 +348,8 @@ int main(int argc, char **argv) {
 
 	if (rank == 0) {
 
-		filename = "imagenew192x128.pgm";
-		//filename = "imagenew768x768.pgm";
+		//filename = "imagenew192x128.pgm";
+		filename = "imagenew768x768.pgm";
 		//filename = "imagenew512x384.pgm";
 		printf("\nWriting <%s>\n", filename);
 		pgmwrite(filename, masterbuf, M, N);
