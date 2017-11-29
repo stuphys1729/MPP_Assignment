@@ -87,8 +87,8 @@ int main(int argc, char **argv) {
 	// The filename should be passed in to the program
 	//filename = argv[1];
 	//filename = "edgenew192x128.pgm";
-	filename = "edgenew768x768.pgm";
-	//filename = "edgenew512x384.pgm";
+	//filename = "edgenew768x768.pgm";
+	filename = "edgenew512x384.pgm";
 
 	/* Section for dynamic arrays */
 	int M, N;	
@@ -237,32 +237,35 @@ int main(int argc, char **argv) {
 	MPI_Cart_shift(comm, 1, 1, &down, &up);
 
 	
-	printf("Rank %d has neighbours:1n", rank);
+	printf("Rank %d has neighbours:\n", rank);
 	printf("up: %d\n", up);
 	printf("down: %d\n", down);
 	printf("left: %d\n", left);
 	printf("right: %d\n", right);
 
+	offset = ( rank / dims[1]) * MP;
 	if (up == MPI_PROC_NULL) {
 		printf("Rank %d is doing top boundary conditions\n", rank);
-		for (i = 1; i < MP; i++) {
+		printf("Offset: %d\n",offset);
+		for (i = 1; i < MP+1; i++) {
 
-			val = boundaryval(i, M);
-			old[i][0] = (int)(255.0*val);
+			val = boundaryval(offset+i, M);
+			old[i][NP+1] = (int)(255.0*(1.0-val));
 		}
 	}
 
 	if (down == MPI_PROC_NULL) {
 		printf("Rank %d is doing bottom boundary conditions\n", rank);
-		for (i = 1; i < MP; i++) {
+		printf("Offset: %d\n",offset);
+		for (i = 1; i < MP+1; i++) {
 
-			val = boundaryval(i, M);
-			old[i][NP+1] = (int)(255.0*val);
+			val = boundaryval(offset+i, M);
+			old[i][0] = (int)(255.0*val);
 		}
 	}
 	
 	MPI_Datatype sides, top_bottom;
-	MPI_Type_contiguous(MP, MPI_REALNUMBER, &sides);
+	MPI_Type_contiguous(NP, MPI_REALNUMBER, &sides);
 	MPI_Type_vector(MP, 1, NP + 2, MPI_REALNUMBER, &top_bottom);
 	
 	//MPI_Request send_up, send_down, send_left, send_right;
@@ -280,7 +283,7 @@ int main(int argc, char **argv) {
 
 		MPI_Isend(&old[MP][1], 1, sides, right, DEFAULT_TAG, comm, &requests[2]);//send_right);
 		MPI_Irecv(&old[MP+1][1], 1, sides, right, DEFAULT_TAG, comm, &requests[3]);//recv_right);
-
+		
 		MPI_Isend(&old[1][1], 1, top_bottom, down, DEFAULT_TAG, comm, &requests[4]);//send_down);
 		MPI_Irecv(&old[1][0], 1, top_bottom, down, DEFAULT_TAG, comm, &requests[5]);//recv_down);
 
@@ -294,8 +297,9 @@ int main(int argc, char **argv) {
 					- edge[i][j]);
 			}
 		}
-		MPI_Waitall(2 * MAX_DIMS*MAX_DIMS, requests, statuses);
 		
+		MPI_Waitall(2 * MAX_DIMS, requests, statuses);
+		/*
 		i = 1;
 		for (j = 1; j < NP + 1; j++) {
 			new[i][j] = 0.25*(old[i - 1][j] + old[i + 1][j] + old[i][j - 1] + old[i][j + 1]
@@ -316,7 +320,8 @@ int main(int argc, char **argv) {
 			new[i][j] = 0.25*(old[i - 1][j] + old[i + 1][j] + old[i][j - 1] + old[i][j + 1]
 				- edge[i][j]);
 		}
-		/*
+		*/
+		
 		// Calculate the sides
 		for (j = 1; j < NP + 1; j++) {
 			new[1][j] = 0.25*(old[0][j] + old[2][j] + old[1][j - 1] + old[1][j + 1]
@@ -331,7 +336,7 @@ int main(int argc, char **argv) {
 			new[i][NP] = 0.25*(old[i - 1][NP] + old[i + 1][NP] + old[i][NP - 1] + old[i][NP + 1]
 				- edge[i][NP]);
 		}
-		*/
+		
 
 		for (i = 1; i<MP+1; i++) {
 			for (j = 1; j<NP+1; j++) {
@@ -342,7 +347,7 @@ int main(int argc, char **argv) {
 	}
 	
 	//printf("\nFinished %d iterations\n", iter-1);
-
+	
 	/* Gather the data back to process 0 */
 	//MPI_Gatherv(buf, MP*NP, MPI_REALNUMBER, masterbuf, counts, disps, Small_send_section, 0, comm);
 	MPI_Gatherv(&old[1][1], 1, Recv_section, masterbuf, counts, disps, Small_send_section, 0, comm);
@@ -350,8 +355,8 @@ int main(int argc, char **argv) {
 	if (rank == 0) {
 
 		//filename = "imagenew192x128.pgm";
-		filename = "imagenew768x768.pgm";
-		//filename = "imagenew512x384.pgm";
+		//filename = "imagenew768x768.pgm";
+		filename = "imagenew512x384.pgm";
 		printf("\nWriting <%s>\n", filename);
 		pgmwrite(filename, masterbuf, M, N);
 
