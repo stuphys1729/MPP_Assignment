@@ -33,6 +33,8 @@
 
 #define TRUE 1
 #define FALSE 0
+#define LEFT_TAG 5
+#define RIGHT_TAG 10
 #define DEFAULT_TAG 0
 /*
 #define M 192
@@ -278,11 +280,13 @@ int main(int argc, char **argv) {
 			printf("Iteration %d\n", iter);
 		}
 		
-		MPI_Isend(&old[1][1], 1, sides, left, DEFAULT_TAG, comm, &requests[0]);//send_left);
-		MPI_Irecv(&old[0][1], 1, sides, left, DEFAULT_TAG, comm, &requests[1]);//recv_left);
+		/* Due to periodic boundaries left and right, we need a different tag for
+		   the two different messages in case 'left' and 'right' are the same process */
+		MPI_Isend(&old[1][1], 1, sides, left, RIGHT_TAG, comm, &requests[0]);//send_left);
+		MPI_Irecv(&old[0][1], 1, sides, left, LEFT_TAG, comm, &requests[1]);//recv_left);
 
-		MPI_Isend(&old[MP][1], 1, sides, right, DEFAULT_TAG, comm, &requests[2]);//send_right);
-		MPI_Irecv(&old[MP+1][1], 1, sides, right, DEFAULT_TAG, comm, &requests[3]);//recv_right);
+		MPI_Isend(&old[MP][1], 1, sides, right, LEFT_TAG, comm, &requests[2]);//send_right);
+		MPI_Irecv(&old[MP+1][1], 1, sides, right, RIGHT_TAG, comm, &requests[3]);//recv_right);
 		
 		MPI_Isend(&old[1][1], 1, top_bottom, down, DEFAULT_TAG, comm, &requests[4]);//send_down);
 		MPI_Irecv(&old[1][0], 1, top_bottom, down, DEFAULT_TAG, comm, &requests[5]);//recv_down);
