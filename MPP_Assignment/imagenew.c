@@ -27,7 +27,7 @@
 #include "arralloc.h"
 #include "precision.h"
 
-#define MAXITER 1
+#define MAXITER 1500
 #define PRINTFREQ  50
 #define MAX_DIMS 2
 
@@ -236,6 +236,14 @@ int main(int argc, char **argv) {
 	MPI_Cart_shift(comm, 0, 1, &left, &right);
 	MPI_Cart_shift(comm, 1, 1, &down, &up);
 
+	if (rank == 0) {
+		printf("Rank %d has neighbours:", rank);
+		printf("up: %d", up);
+		printf("down: %d", down);
+		printf("left: %d", left);
+		printf("right: %d", right);
+	}
+
 	if (up == MPI_PROC_NULL) {
 		printf("Rank %d is doing top boundary conditions\n", rank);
 		for (i = 1; i < MP; i++) {
@@ -304,8 +312,8 @@ int main(int argc, char **argv) {
 		}
 		
 
-		for (i = 0; i<MP+2; i++) {
-			for (j = 0; j<NP+2; j++) {
+		for (i = 1; i<MP+1; i++) {
+			for (j = 1; j<NP+1; j++) {
 				old[i][j] = new[i][j];
 			}
 		}
