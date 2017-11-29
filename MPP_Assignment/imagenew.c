@@ -28,7 +28,7 @@
 #include "precision.h"
 
 #define MAXITER 1
-#define PRINTFREQ  20
+#define PRINTFREQ  50
 #define MAX_DIMS 2
 
 #define TRUE 1
@@ -88,6 +88,7 @@ int main(int argc, char **argv) {
 	//filename = argv[1];
 	filename = "edgenew192x128.pgm";
 	//filename = "edgenew768x768.pgm";
+	//filename = "edgenew512x384.pgm";
 
 	/* Section for dynamic arrays */
 	int M, N;	
@@ -210,7 +211,7 @@ int main(int argc, char **argv) {
 			disps[i*dims[1] + j] = offset;
 			offset++;
 		}
-		offset = MP*dims[1];
+		offset = (i+1)*MP*dims[1];
 		
 	}
 	if (rank == 0) {
@@ -263,7 +264,7 @@ int main(int argc, char **argv) {
 	MPI_Status statuses[2*MAX_DIMS*MAX_DIMS];
 	
 	for (iter= 1;iter<=MAXITER; iter++) {
-		if (iter%PRINTFREQ == 0) {
+		if (iter%PRINTFREQ == 0 && rank==0) {
 			printf("Iteration %d\n", iter);
 		}
 		
@@ -286,6 +287,7 @@ int main(int argc, char **argv) {
 		}
 		MPI_Waitall(2 * MAX_DIMS*MAX_DIMS, requests, statuses);
 
+		
 		// Calculate the sides
 		for (j = 1; j < NP + 1; j++) {
 			new[1][j] = 0.25*(old[0][j] + old[2][j] + old[1][j - 1] + old[1][j + 1]
@@ -300,9 +302,10 @@ int main(int argc, char **argv) {
 			new[i][NP] = 0.25*(old[i - 1][NP] + old[i + 1][NP] + old[i][NP - 1] + old[i][NP + 1]
 				- edge[i][NP]);
 		}
+		
 
-		for (i = 1; i<MP; i++) {
-			for (j = 1; j<NP; j++) {
+		for (i = 0; i<MP+2; i++) {
+			for (j = 0; j<NP+2; j++) {
 				old[i][j] = new[i][j];
 			}
 		}
@@ -319,6 +322,7 @@ int main(int argc, char **argv) {
 
 		filename = "imagenew192x128.pgm";
 		//filename = "imagenew768x768.pgm";
+		//filename = "imagenew512x384.pgm";
 		printf("\nWriting <%s>\n", filename);
 		pgmwrite(filename, masterbuf, M, N);
 
