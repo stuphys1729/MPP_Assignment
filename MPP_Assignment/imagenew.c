@@ -236,13 +236,12 @@ int main(int argc, char **argv) {
 	MPI_Cart_shift(comm, 0, 1, &left, &right);
 	MPI_Cart_shift(comm, 1, 1, &down, &up);
 
-	if (rank == 0) {
-		printf("Rank %d has neighbours:1n", rank);
-		printf("up: %d\n", up);
-		printf("down: %d\n", down);
-		printf("left: %d\n", left);
-		printf("right: %d\n", right);
-	}
+	
+	printf("Rank %d has neighbours:1n", rank);
+	printf("up: %d\n", up);
+	printf("down: %d\n", down);
+	printf("left: %d\n", left);
+	printf("right: %d\n", right);
 
 	if (up == MPI_PROC_NULL) {
 		printf("Rank %d is doing top boundary conditions\n", rank);
@@ -264,7 +263,7 @@ int main(int argc, char **argv) {
 	
 	MPI_Datatype sides, top_bottom;
 	MPI_Type_contiguous(MP, MPI_REALNUMBER, &sides);
-	MPI_Type_vector(NP, 1, NP + 2, MPI_REALNUMBER, &top_bottom);
+	MPI_Type_vector(MP, 1, NP + 2, MPI_REALNUMBER, &top_bottom);
 	
 	//MPI_Request send_up, send_down, send_left, send_right;
 	//MPI_Request recv_up, recv_down, recv_left, recv_right;
