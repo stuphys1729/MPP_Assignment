@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
 	
 	MPI_Datatype sides, top_bottom;
 	MPI_Type_contiguous(MP, MPI_REALNUMBER, &sides);
-	MPI_Type_vector(MP, 1, NP + 2, MPI_REALNUMBER, &top_bottom);
+	MPI_Type_vector(NP, 1, NP + 2, MPI_REALNUMBER, &top_bottom);
 	
 	//MPI_Request send_up, send_down, send_left, send_right;
 	//MPI_Request recv_up, recv_down, recv_left, recv_right;
@@ -276,15 +276,17 @@ int main(int argc, char **argv) {
 			printf("Iteration %d\n", iter);
 		}
 		
-		MPI_Isend(&old[1][1], 1, sides, left, DEFAULT_TAG, comm, &requests[0]);// send_left);
-		MPI_Isend(&old[MP][1], 1, sides, right, DEFAULT_TAG, comm, &requests[1]);//send_right);
-		MPI_Isend(&old[1][1], 1, top_bottom, down, DEFAULT_TAG, comm, &requests[2]);//send_down);
-		MPI_Isend(&old[1][NP], 1, top_bottom, up, DEFAULT_TAG, comm, &requests[3]);//send_up);
+		MPI_Isend(&old[1][1], 1, sides, left, DEFAULT_TAG, comm, &requests[0]);//send_left);
+		MPI_Irecv(&old[0][1], 1, sides, left, DEFAULT_TAG, comm, &requests[1]);//recv_left);
 
-		MPI_Irecv(&old[0][1], 1, sides, left, DEFAULT_TAG, comm, &requests[4]);//recv_left);
-		MPI_Irecv(&old[MP][1], 1, sides, right, DEFAULT_TAG, comm, &requests[5]);//recv_right);
-		MPI_Irecv(&old[1][0], 1, top_bottom, down, DEFAULT_TAG, comm, &requests[6]);//recv_down);
-		MPI_Irecv(&old[1][NP], 1, top_bottom, up, DEFAULT_TAG, comm, &requests[7]);//recv_up);
+		MPI_Isend(&old[MP][1], 1, sides, right, DEFAULT_TAG, comm, &requests[2]);//send_right);
+		MPI_Irecv(&old[MP+1][1], 1, sides, right, DEFAULT_TAG, comm, &requests[3]);//recv_right);
+
+		MPI_Isend(&old[1][1], 1, top_bottom, down, DEFAULT_TAG, comm, &requests[4]);//send_down);
+		MPI_Irecv(&old[1][0], 1, top_bottom, down, DEFAULT_TAG, comm, &requests[5]);//recv_down);
+
+		MPI_Isend(&old[1][NP], 1, top_bottom, up, DEFAULT_TAG, comm, &requests[6]);//send_up);
+		MPI_Irecv(&old[1][NP+1], 1, top_bottom, up, DEFAULT_TAG, comm, &requests[7]);//recv_up);
 		
 
 		for (i = 2; i < MP; i++) {
