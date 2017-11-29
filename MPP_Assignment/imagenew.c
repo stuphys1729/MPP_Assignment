@@ -284,14 +284,28 @@ int main(int argc, char **argv) {
 					- edge[i][j]);
 			}
 		}
-	
-		for (i=1;i<MP;i++) {
-			for (j=1;j<NP;j++) {
-				old[i][j]=new[i][j];
-			}
+		MPI_Waitall(2 * MAX_DIMS*MAX_DIMS, requests, statuses);
+
+		// Calculate the sides
+		for (j = 1; j < NP + 1; j++) {
+			new[1][j] = 0.25*(old[0][j] + old[2][j] + old[1][j - 1] + old[1][j + 1]
+				- edge[1][j]);
+			new[MP][j] = 0.25*(old[MP - 1][j] + old[MP + 1][j] + old[MP][j - 1] + old[MP][j + 1]
+				- edge[MP][j]);
+		}
+		// Calculate the top and bottom
+		for (i = 1; i < MP; i++) {
+			new[i][1] = 0.25*(old[i - 1][1] + old[i + 1][1] + old[i][0] + old[i][2]
+				- edge[i][1]);
+			new[i][NP] = 0.25*(old[i - 1][NP] + old[i + 1][NP] + old[i][NP - 1] + old[i][NP + 1]
+				- edge[i][NP]);
 		}
 
-		MPI_Waitall(2 * MAX_DIMS*MAX_DIMS, requests, statuses);
+		for (i = 1; i<MP; i++) {
+			for (j = 1; j<NP; j++) {
+				old[i][j] = new[i][j];
+			}
+		}
 
 	}
 	
