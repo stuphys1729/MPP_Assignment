@@ -212,7 +212,7 @@ int main(int argc, char **argv) {
 	MPI_Status statuses[2*(2*MAX_DIMS)];
 
 	RealNumber max_delta;
-	RealNumber global_delta;
+	RealNumber global_delta = 1.0;
 	
 	for (iter= 1;iter<=MAXITER; iter++) {
 		if (iter%PRINTFREQ == 0 && rank==0) {
@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
 			}
 		}
 		if (iter % DELTAFREQ == 0 && iter > DELTASTART) {
-			MPI_Allreduce(&max_delta, &global_delta, 1, MPI_REALNUMBER, MPI_MIN, comm);
+			MPI_Allreduce(&max_delta, &global_delta, 1, MPI_REALNUMBER, MPI_MAX, comm);
 		}
 		if (global_delta <= MINDELTA) break;
 
