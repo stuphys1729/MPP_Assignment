@@ -149,11 +149,13 @@ int main(int argc, char **argv) {
 		offset = (i+1)*MP*dims[1];
 		
 	}
+	/*
 	if (rank == 0) {
 		for (i = 0; i < size; i++) {
 			printf("disp: %d\n", disps[i]);
 		}
 	}
+	*/
 
 	/* Begin timing the computation */
 	start = MPI_Wtime();
@@ -268,10 +270,12 @@ int main(int argc, char **argv) {
 
 	if (rank == 0) {
 
+		char *outfile;
+		outfile = (char *)malloc(sizeof(char) * 30);
 		printf("Total Computation Time: %f", taken);
-		sprintf(filename, "imagenew%dx%d_%d.pgm", M, N, size);
-		printf("\nWriting <%s>\n", filename);
-		pgmwrite(filename, masterbuf, M, N);
+		sprintf(outfile, "imagenew%dx%d_%d.pgm", M, N, size);
+		printf("\nWriting <%s>\n", outfile);
+		pgmwrite(outfile, masterbuf, M, N);
 
 	}
 
