@@ -65,10 +65,6 @@ int main(int argc, char **argv) {
 	MPI_Comm comm;
 	MPI_Dims_create(size, MAX_DIMS, dims);
 	
-
-	
-	MPI_Comm_rank(comm, &rank);
-	
 	/* The filename should be passed in to the program */
 	filename = argv[1];
 
@@ -85,12 +81,17 @@ int main(int argc, char **argv) {
 			dims[1] - temp;
 		}
 		else {
-			printf("The passed image and processor combination is not compatible\n");
+			MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+			if (rank == 0) {
+				printf("The passed image and processor combination is not compatible\n");
+			}
+			MPI_Finalize();
 			exit(1);
 		}
 	}
 
 	MPI_Cart_create(MPI_COMM_WORLD, MAX_DIMS, dims, periods, TRUE, &comm);
+	MPI_Comm_rank(comm, &rank);
 
 	/* Configures the maximum domaian size */
 	int MP = M / dims[0];
