@@ -57,13 +57,14 @@ int main(int argc, char **argv) {
 
 	for (i = 0; i < MAX_DIMS; i++) {
 		dims[i] = 0;
+		// Only periodic boundary conditions horizontally
 		if (i == 0) periods[i] = TRUE;
 		else periods[i] = FALSE;
 	}
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm comm;
 	MPI_Dims_create(size, MAX_DIMS, dims);
-	MPI_Cart_create(MPI_COMM_WORLD, MAX_DIMS, dims, periods, TRUE, &comm);
+	
 
 	
 	MPI_Comm_rank(comm, &rank);
@@ -75,13 +76,27 @@ int main(int argc, char **argv) {
 	int M, N;	
 	pgmsize(filename, &M, &N);
 
-	// Configures the maximum domaian size
-	int MP = ceil((RealNumber)M / (RealNumber)dims[0]);
-	int NP = ceil((RealNumber)N / (RealNumber)dims[1]);
+	if (M % dims[0] || N % dims[1]) {
+		// This configuration does not give equal domain sizes
+		if (!(M % dims[1]) && !(N % dims[0])) {
+			// Swapping the orientation works
+			int temp = dims[0];
+			dims[0] = dims[1];
+			dims[1] - temp;
+		}
+		else {
+			printf("The passed image and processor combination is not compatible\n");
+			exit(1);
+		}
+	}
 
-	// Allocate space for the arrays
-	tempbuf = (RealNumber **)arralloc(sizeof(RealNumber), 2, M, NP);
+	MPI_Cart_create(MPI_COMM_WORLD, MAX_DIMS, dims, periods, TRUE, &comm);
 
+	/* Configures the maximum domaian size */
+	int MP = M / dims[0];
+	int NP = N / dims[1];
+
+	/* Allocate space for the arrays */
 	new = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP + 2, NP + 2);
 	old = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP + 2, NP + 2);
 	edge = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP + 2, NP + 2);
@@ -92,7 +107,6 @@ int main(int argc, char **argv) {
 
 
 	if (rank == 0) {
-
 		printf("Processing %d x %d image\n", M, N);
 		printf("Number of iterations = %d\n", MAXITER);
 
@@ -107,7 +121,6 @@ int main(int argc, char **argv) {
 		but still ensuring that each row of processes has the same number of column pixels,
 		and each column of processes has the same number of row pixels
 	*/
-
 	int base_i = floor((RealNumber)M / (RealNumber)dims[0]);
 	int base_j = floor((RealNumber)N / (RealNumber)dims[1]);
 	int rem_i = M - (base_i*dims[0]);
@@ -153,10 +166,6 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	/* Stuff for sending same-size blocks */
-	/*	We can send each processor the same (maximum) sized blocks, but they can
-		overwrite bits that are not part of their domain */
-
 	int sizes[MAX_DIMS] = { M,N };
 	int sub_sizes[MAX_DIMS] = { MP,NP };
 	int starts[MAX_DIMS] = { 0,0 };
@@ -195,6 +204,7 @@ int main(int argc, char **argv) {
 	printf("Scattering the original image.\n");
 	MPI_Scatterv(masterbuf, counts, disps, Small_send_section, &edge[1][1], 1, Recv_section, 0, comm);
 
+	/* Initialise our 'guess' of the image to a bright square */
 	for (i=0; i<MP+2;i++) {
 		for (j=0;j<NP+2;j++) {
 			old[i][j]=255.0;
@@ -204,30 +214,22 @@ int main(int argc, char **argv) {
 	int up, down, left, right;
 	RealNumber val;
 
+	/* Find out where to send and receive halo swaps */
 	MPI_Cart_shift(comm, 0, 1, &left, &right);
 	MPI_Cart_shift(comm, 1, 1, &down, &up);
 
-	
-	printf("Rank %d has neighbours:\n", rank);
-	printf("up: %d\n", up);
-	printf("down: %d\n", down);
-	printf("left: %d\n", left);
-	printf("right: %d\n", right);
-
+	/* For the sawtooth boundary conditions, we must find the overall
+		pixel position, depending on the processor's domian */
 	offset = ( rank / dims[1]) * MP;
 	if (up == MPI_PROC_NULL) {
-		printf("Rank %d is doing top boundary conditions\n", rank);
-		printf("Offset: %d\n",offset);
 		for (i = 1; i < MP+1; i++) {
 
-			val = boundaryval(offset+i, M);
+			val = boundaryval(offset + i, M);
 			old[i][NP+1] = (int)(255.0*(1.0-val));
 		}
 	}
 
 	if (down == MPI_PROC_NULL) {
-		printf("Rank %d is doing bottom boundary conditions\n", rank);
-		printf("Offset: %d\n",offset);
 		for (i = 1; i < MP+1; i++) {
 
 			val = boundaryval(offset+i, M);
@@ -239,8 +241,8 @@ int main(int argc, char **argv) {
 	MPI_Type_contiguous(NP, MPI_REALNUMBER, &sides);
 	MPI_Type_vector(MP, 1, NP + 2, MPI_REALNUMBER, &top_bottom);
 	
-	MPI_Request requests[2*MAX_DIMS*MAX_DIMS];
-	MPI_Status statuses[2*MAX_DIMS*MAX_DIMS];
+	MPI_Request requests[2*(2*MAX_DIMS)];
+	MPI_Status statuses[2*(2*MAX_DIMS)];
 	
 	for (iter= 1;iter<=MAXITER; iter++) {
 		if (iter%PRINTFREQ == 0 && rank==0) {
@@ -295,15 +297,16 @@ int main(int argc, char **argv) {
 		}
 
 	}
-	
-	printf("\nFinished %d iterations\n", iter-1);
+	if (rank == 0) {
+		printf("\nFinished %d iterations\n", iter - 1);
+	}	
 	
 	/* Gather the data back to process 0 */
 	MPI_Gatherv(&old[1][1], 1, Recv_section, masterbuf, counts, disps, Small_send_section, 0, comm);
 
 	if (rank == 0) {
 
-		sprintf(&filename, "imagenew%dx%d_%d", M, N, size);
+		sprintf(filename, "imagenew%dx%d_%d.pgm", M, N, size);
 		printf("\nWriting <%s>\n", filename);
 		pgmwrite(filename, masterbuf, M, N);
 
