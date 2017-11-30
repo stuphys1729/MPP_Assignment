@@ -29,6 +29,10 @@
 
 #define MAXITER 1500
 #define PRINTFREQ  200
+
+#define DELTASTART 500
+#define DELTAFREQ 10
+#define MINDELTA 0.1
 #define MAX_DIMS 2
 
 #define TRUE 1
@@ -204,6 +208,9 @@ int main(int argc, char **argv) {
 	
 	MPI_Request requests[2*(2*MAX_DIMS)];
 	MPI_Status statuses[2*(2*MAX_DIMS)];
+
+	RealNumber max_delta;
+	RealNumber global_delta;
 	
 	for (iter= 1;iter<=MAXITER; iter++) {
 		if (iter%PRINTFREQ == 0 && rank==0) {
@@ -250,17 +257,25 @@ int main(int argc, char **argv) {
 				- edge[i][NP]);
 		}
 		
+		max_delta = 0.0;
 		/* Copy the new array into the old for the next iteration */
 		for (i = 1; i<MP+1; i++) {
 			for (j = 1; j<NP+1; j++) {
+				if (iter % DELTAFREQ == 0 && iter > DELTASTART) {
+					max_delta = max(fabs((new[i][j] - old[i][j])), max_delta);
+				}
 				old[i][j] = new[i][j];
 			}
 		}
+		if (iter % DELTAFREQ == 0 && iter > DELTASTART) {
+			MPI_Allreduce(&max_delta, &global_delta, 1, MPI_REALNUMBER, MPI_MIN, comm);
+		}
+		if (global_delta <= MINDELTA) break;
 
 	}
 	if (rank == 0) {
 		printf("\nFinished %d iterations\n", iter - 1);
-	}	
+	}
 	
 	/* Gather the data back to process 0 */
 	MPI_Gatherv(&old[1][1], 1, Recv_section, masterbuf, counts, disps, Small_send_section, 0, comm);
