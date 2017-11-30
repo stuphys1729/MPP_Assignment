@@ -48,6 +48,8 @@ int main(int argc, char **argv) {
 	int i, j, iter;
 	char *filename;
 
+	RealNumber start, taken;
+
 	int rank, size, dims[MAX_DIMS];
 	
 	int ***domains, *disps, *counts;
@@ -124,6 +126,7 @@ int main(int argc, char **argv) {
 	MPI_Datatype Send_section;
 	MPI_Datatype Small_send_section;
 	MPI_Type_create_subarray(2, sizes, sub_sizes, starts, MPI_ORDER_C, MPI_REALNUMBER, &Send_section);
+
 	/*	We change MPI's understanding of where each section ends to be just one number after
 		it starts to allow us to give precise locations of domain beginnings	*/
 	MPI_Type_create_resized(Send_section, 0, NP*sizeof(RealNumber), &Small_send_section);
@@ -151,6 +154,9 @@ int main(int argc, char **argv) {
 			printf("disp: %d\n", disps[i]);
 		}
 	}
+
+	/* Begin timing the computation */
+	start = MPI_Wtime();
 
 	if (rank == 0) {
 		printf("Scattering the original image.\n");
@@ -257,8 +263,12 @@ int main(int argc, char **argv) {
 	/* Gather the data back to process 0 */
 	MPI_Gatherv(&old[1][1], 1, Recv_section, masterbuf, counts, disps, Small_send_section, 0, comm);
 
+	/* Stop timing the computation */
+	taken = MPI_Wtime() - start;
+
 	if (rank == 0) {
 
+		printf("Total Computation Time: %f", taken);
 		sprintf(filename, "imagenew%dx%d_%d.pgm", M, N, size);
 		printf("\nWriting <%s>\n", filename);
 		pgmwrite(filename, masterbuf, M, N);
