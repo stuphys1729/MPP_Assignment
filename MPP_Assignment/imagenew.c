@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
 			// Swapping the orientation works
 			int temp = dims[0];
 			dims[0] = dims[1];
-			dims[1] - temp;
+			dims[1] = temp;
 		}
 		else {
 			MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -117,56 +117,6 @@ int main(int argc, char **argv) {
 		pgmread(filename, masterbuf, M, N);
 	}
 
-	/*	Configure the domain sizes, giving more work to the top and bottom processes
-		since they have one less communication direction (non-periodic)
-		but still ensuring that each row of processes has the same number of column pixels,
-		and each column of processes has the same number of row pixels
-	*/
-	int base_i = floor((RealNumber)M / (RealNumber)dims[0]);
-	int base_j = floor((RealNumber)N / (RealNumber)dims[1]);
-	int rem_i = M - (base_i*dims[0]);
-	int rem_j = N - (base_j*dims[1]);
-
-	for (i = 0; i < dims[0]; i++) {
-		for (j = 0; j < dims[1]; j++) {
-			domains[i][j][0] = base_i;
-			domains[i][j][1] = base_j;
-		}
-	}
-	
-	// give the first extra row of pixels to the top set of processors
-	if (rem_j > 0) {
-		for (i = 0; i < dims[0]; i++) {
-			domains[i][0][0]++;
-		}
-		rem_j--;
-	}
-	// Put the remaining extra rows from the first row down until we run out
-	for (j = 0; j < rem_j; j++) { 
-		for (i = 0; i < dims[0]; i++) {
-			domains[i][j][0]++;
-		}
-	}
-
-	// The remaining columns can be distributed to all but the first
-	for (i = dims[0]; i > 0; i--) {
-		if (rem_i == 0) break;
-		for (j = 1; j < dims[1]; j++) {
-			domains[i][j][1]++;
-		}
-		rem_i--;
-	}
-
-	if (rank == 0) {
-		printf("Determined Domain Sizes\n");
-		for (i = 0; i < dims[0]; i++) {
-			for (j = 0; j < dims[1]; j++) {
-				printf("(%d,%d) ", domains[i][j][0], domains[i][j][1]);
-			}
-			printf("\n");
-		}
-	}
-
 	int sizes[MAX_DIMS] = { M,N };
 	int sub_sizes[MAX_DIMS] = { MP,NP };
 	int starts[MAX_DIMS] = { 0,0 };
@@ -202,7 +152,9 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	printf("Scattering the original image.\n");
+	if (rank == 0) {
+		printf("Scattering the original image.\n");
+	}
 	MPI_Scatterv(masterbuf, counts, disps, Small_send_section, &edge[1][1], 1, Recv_section, 0, comm);
 
 	/* Initialise our 'guess' of the image to a bright square */
