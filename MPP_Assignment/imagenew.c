@@ -41,6 +41,8 @@
 #define RIGHT_TAG 10
 #define DEFAULT_TAG 0
 
+#define max(x,y) ((x) >= (y)) ? (x) : (y)
+
 RealNumber boundaryval(int i, int m);
 
 int main(int argc, char **argv) {
