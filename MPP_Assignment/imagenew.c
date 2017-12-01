@@ -1,5 +1,6 @@
 /*
  * A file to reconstruct the original image from an edge file.
+ * Author: B059476
  *
  * Throughout the program, the following coordinate convention is assumed
  * For an array[i][j]:
@@ -24,8 +25,6 @@
 #include "pgmio.h"
 #include "arralloc.h"
 #include "precision.h"
-//#include "MPI_Comms.h"
- //#include "FAKE_Comms.h"
 
 #define MAXITER 1500
 #define PRINTFREQ  200
@@ -58,7 +57,7 @@ int main(int argc, char **argv) {
 
 	int rank, size, dims[MAX_DIMS];
 	
-	int ***domains, *disps, *counts;
+	int *disps, *counts;
 	
 	/* Initialise a cartesian topology */
 	int periods[MAX_DIMS];
@@ -110,7 +109,6 @@ int main(int argc, char **argv) {
 	old = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP + 2, NP + 2);
 	edge = (RealNumber **)arralloc(sizeof(RealNumber), 2, MP + 2, NP + 2);
 
-	domains = (int ***)arralloc(sizeof(int), 3, dims[0], dims[1], 2);
 	disps = (int *)arralloc(sizeof(int), 1, size);
 	counts = (int *)arralloc(sizeof(int), 1, size);
 
@@ -155,13 +153,6 @@ int main(int argc, char **argv) {
 		offset = (i+1)*MP*dims[1];
 		
 	}
-	/*
-	if (rank == 0) {
-		for (i = 0; i < size; i++) {
-			printf("disp: %d\n", disps[i]);
-		}
-	}
-	*/
 
 	/* Begin timing the computation */
 	start = MPI_Wtime();
@@ -171,7 +162,7 @@ int main(int argc, char **argv) {
 	}
 	MPI_Scatterv(masterbuf, counts, disps, Small_send_section, &edge[1][1], 1, Recv_section, 0, comm);
 
-	/* Initialise our 'guess' of the image to a bright square */
+	/* Initialise our 'guess' of the image to a white image */
 	for (i=0; i<MP+2;i++) {
 		for (j=0;j<NP+2;j++) {
 			old[i][j]=255.0;
